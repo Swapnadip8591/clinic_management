@@ -22,6 +22,11 @@
                 <li><a href="show_visit.php">Show Visit Details</a></li>
             </ul>
         </div>
+        <div class="button-row">
+            <ul>
+                <li><a href="delete.php" class="button">Delete Data</a></li>
+            </ul>
+        </div>
         <br>
         <div class="logout-form">
             <form action="logout.php" method="post">
