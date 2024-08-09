@@ -8,23 +8,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     switch ($deleteType) {
         case 'patient':
             // Delete patient and related visits
-            $stmt = $conn->prepare("DELETE FROM Visits WHERE PatientID = ?");
+            $stmt = $conn->prepare("DELETE FROM visits WHERE patientID = ?");
             $stmt->execute([$deleteId]);
-            $stmt = $conn->prepare("DELETE FROM Patients WHERE PatientID = ?");
+            $stmt = $conn->prepare("DELETE FROM patients WHERE patientID = ?");
             $stmt->execute([$deleteId]);
             echo "Patient and related visits deleted successfully.";
             break;
 
         case 'medicine':
             // Delete medicine
-            $stmt = $conn->prepare("DELETE FROM Medicines WHERE MedicineID = ?");
+            $stmt = $conn->prepare("DELETE FROM medicines WHERE medicineID = ?");
             $stmt->execute([$deleteId]);
             echo "Medicine deleted successfully.";
             break;
 
         case 'visit':
             // Delete visit
-            $stmt = $conn->prepare("DELETE FROM Visits WHERE VisitID = ?");
+            $stmt = $conn->prepare("DELETE FROM receipts WHERE visitID = ?");
+            $stmt->execute([$deleteId]);
+            $stmt = $conn->prepare("DELETE FROM visits WHERE visitID = ?");
             $stmt->execute([$deleteId]);
             echo "Visit deleted successfully.";
             break;
