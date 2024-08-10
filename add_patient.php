@@ -36,7 +36,7 @@
             
             <input type="submit" value="Add Patient">
 
-            <ul><li><a href="index.php">Go to Main Menu</a></li></ul>
+            <ul><li><a href="index_assistant.php">Back to Dashboard</a></li></ul>
         </form>
 
         

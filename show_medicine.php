@@ -33,6 +33,7 @@ $stmt = $conn->query("SELECT * FROM medicines");
             </tr>
             <?php } ?>
         </table>
+        <ul><li><a href="index_doctor.php">Back to Dashboard</a></li></ul>
     </div>
 </body>
 </html>

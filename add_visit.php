@@ -1,4 +1,16 @@
-<?php include 'db.php'; ?>
+<?php
+session_start();
+include 'db.php';
+
+// Check if user is logged in and is a doctor
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'doctor') {
+    header("Location: login.php");
+    exit();
+}
+
+$doctor_id = $_SESSION['user_id'];
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -71,7 +83,7 @@
 
             <input type="submit" value="Add Visit">
 
-            <ul><li><a href="index.php">Go to Main Menu</a></li></ul>
+            <ul><li><a href="index_doctor.php">Back to Dashboard</a></li></ul>
         </form>
 
         <?php
@@ -108,8 +120,8 @@
             }
 
             // Add the visit
-            $stmt = $conn->prepare("INSERT INTO Visits (PatientID, VisitDate, DiseaseDiagnosed, PrescriptionDetails, FeeCharged) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$patient_id, $visit_date, $disease_diagnosed, $prescription_details, $fee]);
+            $stmt = $conn->prepare("INSERT INTO Visits (PatientID, UserID, VisitDate, DiseaseDiagnosed, PrescriptionDetails, FeeCharged) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$patient_id, $doctor_id, $visit_date, $disease_diagnosed, $prescription_details, $fee]);
 
             // Add the receipt
             $stmt = $conn->prepare("INSERT INTO Receipts (VisitID, ReceiptDetails, TotalAmount) VALUES (?, ?, ?)");

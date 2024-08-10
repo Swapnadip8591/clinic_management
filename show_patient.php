@@ -1,6 +1,15 @@
 <?php
 include 'db.php';
+session_start();
 
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Determine the correct dashboard link based on user role
+$dashboard_link = ($_SESSION['role'] === 'doctor') ? 'index_doctor.php' : 'index_assistant.php';
 $stmt = $conn->query("SELECT * FROM patients");
 ?>
 
@@ -37,6 +46,9 @@ $stmt = $conn->query("SELECT * FROM patients");
             </tr>
             <?php } ?>
         </table>
+        <ul>
+            <li><a href="<?php echo $dashboard_link; ?>">Back to Dashboard</a></li>
+        </ul>
     </div>
 </body>
 </html>

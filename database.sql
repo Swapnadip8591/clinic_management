@@ -3,10 +3,11 @@ CREATE DATABASE IF NOT EXISTS clinic_management;
 USE clinic_management;
 
 -- Create the Users table for login
-CREATE TABLE IF NOT EXISTS Users (
+CREATE TABLE Users (
     UserID INT AUTO_INCREMENT PRIMARY KEY,
     Username VARCHAR(50) NOT NULL UNIQUE,
-    Password VARCHAR(255) NOT NULL
+    Password VARCHAR(255) NOT NULL,
+    Role ENUM('doctor', 'assistant') NOT NULL
 );
 
 -- Create the Patients table
@@ -35,11 +36,13 @@ CREATE TABLE IF NOT EXISTS Medicines (
 CREATE TABLE IF NOT EXISTS Visits (
     VisitID INT AUTO_INCREMENT PRIMARY KEY,
     PatientID INT NOT NULL,
+    UserID INT,
     VisitDate DATE NOT NULL,
     DiseaseDiagnosed VARCHAR(255) NOT NULL,
     PrescriptionDetails TEXT,
     FeeCharged INT(3) NOT NULL,
-    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
+    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID),
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 
 -- Create the Receipts table

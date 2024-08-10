@@ -1,46 +1,67 @@
 <?php
 include 'db.php';
+session_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$user_role = $_SESSION['role'];
+
+// Determine the correct dashboard link based on user role
+$dashboard_link = ($user_role === 'doctor') ? 'index_doctor.php' : 'index_assistant.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $deleteType = $_POST['deleteType'];
     $deleteId = $_POST['deleteId'];
 
-    switch ($deleteType) {
-        case 'patient':
-            // Delete patient and related visits
-            $stmt = $conn->prepare("DELETE FROM visits WHERE patientID = ?");
-            $stmt->execute([$deleteId]);
-            $stmt = $conn->prepare("DELETE FROM patients WHERE patientID = ?");
-            $stmt->execute([$deleteId]);
-            echo "Patient and related visits deleted successfully.";
-            break;
+    // Check if assistant is trying to delete medicine
+    if ($user_role === 'assistant' && $deleteType === 'medicine') {
+        echo "Assistants are not authorized to delete medicines.";
+    } else {
+        switch ($deleteType) {
+            case 'patient':
+                // Delete patient and related visits
+                $stmt = $conn->prepare("DELETE FROM receipts WHERE visitID IN (SELECT visitID FROM visits WHERE patientID = ?)");
+                $stmt->execute([$deleteId]);
+                $stmt = $conn->prepare("DELETE FROM visits WHERE patientID = ?");
+                $stmt->execute([$deleteId]);
+                $stmt = $conn->prepare("DELETE FROM patients WHERE patientID = ?");
+                $stmt->execute([$deleteId]);
+                echo "Patient and related visits deleted successfully.";
+                break;
 
-        case 'medicine':
-            // Delete medicine
-            $stmt = $conn->prepare("DELETE FROM medicines WHERE medicineID = ?");
-            $stmt->execute([$deleteId]);
-            echo "Medicine deleted successfully.";
-            break;
+            case 'medicine':
+                // Only doctors can delete medicines
+                $stmt = $conn->prepare("DELETE FROM medicines WHERE medicineID = ?");
+                $stmt->execute([$deleteId]);
+                echo "Medicine deleted successfully.";
+                break;
 
-        case 'visit':
-            // Delete visit
-            $stmt = $conn->prepare("DELETE FROM receipts WHERE visitID = ?");
-            $stmt->execute([$deleteId]);
-            $stmt = $conn->prepare("DELETE FROM visits WHERE visitID = ?");
-            $stmt->execute([$deleteId]);
-            echo "Visit deleted successfully.";
-            break;
+            case 'visit':
+                // Delete visit
+                $stmt = $conn->prepare("DELETE FROM receipts WHERE visitID = ?");
+                $stmt->execute([$deleteId]);
+                $stmt = $conn->prepare("DELETE FROM visits WHERE visitID = ?");
+                $stmt->execute([$deleteId]);
+                echo "Visit deleted successfully.";
+                break;
 
-        default:
-            echo "Invalid delete type.";
-            break;
+            default:
+                echo "Invalid delete type.";
+                break;
+        }
     }
 }
 
 // Fetch data for dropdowns
 $patients = $conn->query("SELECT PatientID, PatientName FROM Patients");
-$medicines = $conn->query("SELECT MedicineID, MedicineName FROM Medicines");
 $visits = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
+
+// Only fetch medicines if the user is a doctor
+$medicines = ($user_role === 'doctor') ? $conn->query("SELECT MedicineID, MedicineName FROM Medicines") : null;
 ?>
 
 <!DOCTYPE html>
@@ -64,6 +85,7 @@ $visits = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
                         optionsHtml += `<option value="<?php echo $row['PatientID']; ?>"><?php echo htmlspecialchars($row['PatientName']); ?></option>`;
                     <?php endwhile; ?>
                     break;
+                <?php if ($user_role === 'doctor'): ?>
                 case 'medicine':
                     <?php 
                     $stmt = $conn->query("SELECT MedicineID, MedicineName FROM Medicines");
@@ -72,6 +94,7 @@ $visits = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
                         optionsHtml += `<option value="<?php echo $row['MedicineID']; ?>"><?php echo htmlspecialchars($row['MedicineName']); ?></option>`;
                     <?php endwhile; ?>
                     break;
+                <?php endif; ?>
                 case 'visit':
                     <?php 
                     $stmt = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
@@ -97,7 +120,9 @@ $visits = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
             <select id="deleteType" name="deleteType" onchange="updateDeleteOptions()">
                 <option value="">--Select Type--</option>
                 <option value="patient">Patient</option>
+                <?php if ($user_role === 'doctor'): ?>
                 <option value="medicine">Medicine</option>
+                <?php endif; ?>
                 <option value="visit">Visit</option>
             </select>
             <br>
@@ -108,6 +133,9 @@ $visits = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
             <br>
             <button type="submit">Delete Data</button>
         </form>
+        <ul>
+            <li><a href="<?php echo $dashboard_link; ?>">Back to Dashboard</a></li>
+        </ul>
     </div>
 </body>
 </html>

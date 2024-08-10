@@ -26,7 +26,7 @@
             
             <input type="submit" value="Add Medicine">
 
-            <ul><li><a href="index.php">Go to Main Menu</a></li></ul>
+            <ul><li><a href="index_doctor.php">Back to Dashboard</a></li></ul>
         </form>
         
         <?php
