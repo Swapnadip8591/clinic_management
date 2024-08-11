@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
 }
 
 $user_role = $_SESSION['role'];
+$user_id = $_SESSION['user_id'];
 
 // Determine the correct dashboard link based on user role
 $dashboard_link = ($user_role === 'doctor') ? 'index_doctor.php' : 'index_assistant.php';
@@ -42,6 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'visit':
                 // Delete visit
+                if ($user_role === 'doctor') {
+                    // Check if the visit belongs to the logged-in doctor
+                    $stmt = $conn->prepare("SELECT COUNT(*) FROM visits WHERE visitID = ? AND UserID = ?");
+                    $stmt->execute([$deleteId, $user_id]);
+                    $count = $stmt->fetchColumn();
+                    if ($count == 0) {
+                        echo "You are not authorized to delete this visit.";
+                        break;
+                    }
+                }
                 $stmt = $conn->prepare("DELETE FROM receipts WHERE visitID = ?");
                 $stmt->execute([$deleteId]);
                 $stmt = $conn->prepare("DELETE FROM visits WHERE visitID = ?");
@@ -58,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch data for dropdowns
 $patients = $conn->query("SELECT PatientID, PatientName FROM Patients");
-$visits = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
 
 // Only fetch medicines if the user is a doctor
 $medicines = ($user_role === 'doctor') ? $conn->query("SELECT MedicineID, MedicineName FROM Medicines") : null;
@@ -97,10 +107,20 @@ $medicines = ($user_role === 'doctor') ? $conn->query("SELECT MedicineID, Medici
                 <?php endif; ?>
                 case 'visit':
                     <?php 
-                    $stmt = $conn->query("SELECT VisitID, PatientID, VisitDate FROM Visits");
+                    if ($user_role === 'doctor') {
+                        $stmt = $conn->prepare("SELECT v.VisitID, p.PatientName, v.VisitDate 
+                                                FROM Visits v 
+                                                JOIN Patients p ON v.PatientID = p.PatientID 
+                                                WHERE v.UserID = ?");
+                        $stmt->execute([$user_id]);
+                    } else {
+                        $stmt = $conn->query("SELECT v.VisitID, p.PatientName, v.VisitDate 
+                                              FROM Visits v 
+                                              JOIN Patients p ON v.PatientID = p.PatientID");
+                    }
                     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): 
                     ?>
-                        optionsHtml += `<option value="<?php echo $row['VisitID']; ?>">PatientID: <?php echo $row['PatientID']; ?>, Date: <?php echo $row['VisitDate']; ?></option>`;
+                        optionsHtml += `<option value="<?php echo $row['VisitID']; ?>"><?php echo htmlspecialchars($row['PatientName']); ?>, Date: <?php echo $row['VisitDate']; ?></option>`;
                     <?php endwhile; ?>
                     break;
                 default:
