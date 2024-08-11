@@ -43,7 +43,7 @@ $doctor_id = $_SESSION['user_id'];
                 <th>Prescription Details</th>
                 <th>Receipt Details</th>
                 <th>Total Amount</th>
-                <th>Action</th>
+                <th>Update</th>
             </tr>
             <?php
             $stmt = $conn->prepare("SELECT visits.VisitID, patients.PatientName, visits.VisitDate, visits.DiseaseDiagnosed, visits.PrescriptionDetails, receipts.ReceiptDetails, receipts.TotalAmount 
